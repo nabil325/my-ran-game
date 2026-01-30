@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Puzzle Pro</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --grid-bg: #1e293b;
+            --accent: #0ea5e9;
+            --gold: #ffbd39;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            touch-action: none;
+        }
+
+        .stats-bar {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        #score-val { color: var(--gold); }
+        #level-val { color: var(--accent); }
+
+        /* الشبكة الرئيسية */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(8, 40px);
+            grid-template-rows: repeat(8, 40px);
+            gap: 4px;
+            background: var(--grid-bg);
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+        }
+
+        .cell.filled { background: var(--accent); box-shadow: inset 0 0 10px rgba(0,0,0,0.3); }
+
+        /* منطقة الأشكال القادمة */
+        .shapes-container {
+            margin-top: 30px;
+            display: flex;
+            gap: 20px;
+            min-height: 120px;
+        }
+
+        .shape {
+            display: grid;
+            gap: 2px;
+            cursor: grab;
+            transition: transform 0.2s;
+        }
+
+        .shape:active { transform: scale(1.1); cursor: grabbing; }
+
+        .block {
+            width: 30px;
+            height: 30px;
+            background: var(--gold);
+            border-radius: 4px;
+        }
+
+        .empty-block { width: 30px; height: 30px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="stats-bar">
+        <div>النقاط: <span id="score-val">0</span></div>
+        <div>المستوى: <span id="level-val">1</span></div>
+    </div>
+
+    <div class="grid" id="main-grid">
+        </div>
+
+    <div class="shapes-container" id="shapes-box">
+        </div>
+
+    <script>
+        const gridElement = document.getElementById('main-grid');
+        const scoreElement = document.getElementById('score-val');
+        const levelElement = document.getElementById('level-val');
+        
+        let score = 0;
+        let level = 1;
+        const gridSize = 8;
+        let gridState = Array(gridSize * gridSize).fill(false);
+
+        // 1. إنشاء الشبكة
+        function createGrid() {
+            for (let i = 0; i < gridSize * gridSize; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.dataset.index = i;
+                gridElement.appendChild(cell);
+            }
+        }
+
+        // 2. منطق النقاط والمستويات
+        function updateScore(points) {
+            score += points;
+            scoreElement.innerText = score;
+            
+            // رفع المستوى كل 500 نقطة
+            let newLevel = Math.floor(score / 500) + 1;
+            if (newLevel > level) {
+                level = newLevel;
+                levelElement.innerText = level;
+                alert("تهانينا! وصلت للمستوى " + level);
+            }
+        }
+
+        // 3. محاكاة وضع المكعبات (تبسيطاً للكود)
+        gridElement.addEventListener('click', (e) => {
+            if (e.target.classList.contains('cell')) {
+                const index = e.target.dataset.index;
+                if (!gridState[index]) {
+                    gridState[index] = true;
+                    e.target.classList.add('filled');
+                    updateScore(10);
+                    checkLines();
+                }
+            }
+        });
+
+        // 4. التحقق من اكتمال الصفوف أو الأعمدة
+        function checkLines() {
+            // منطق مسح الصفوف (تبسيط)
+            // في اللعبة الكاملة يتم فحص كل صف وعمود وإذا كان ممتلئاً يتم تصفيره
+        }
+
+        // تشغيل اللعبة
+        createGrid();
+
+    </script>
+</body>
+</html>
