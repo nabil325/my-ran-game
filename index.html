@@ -1,234 +1,311 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<title>IQ Arena – Hexa Flow</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IQ Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            font-family: 'Cairo', sans-serif;
+            color: white;
+            overflow: hidden; /* لمنع ظهور scrollbars */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); /* خلفية متدرجة جميلة */
+            background-size: 400% 400%;
+            animation: gradientAnimation 15s ease infinite; /* حركة الخلفية */
+        }
 
-<style>
-:root{
-  --neon:#00ffe1;
-  --bg:#05050a;
-  --glass:rgba(255,255,255,.08);
-}
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
 
-*{
-  box-sizing:border-box;
-  font-family:Segoe UI, sans-serif;
-}
+        .screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            pointer-events: none; /* لتجنب التفاعل مع الشاشات غير النشطة */
+        }
 
-body{
-  margin:0;
-  background:radial-gradient(circle at top,#0a0a18,var(--bg));
-  color:white;
-  height:100vh;
-  overflow:hidden;
-}
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
 
-/* ========== MAP ========== */
-#map{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-  gap:30px;
-}
+        /* شاشة البداية */
+        #start-screen {
+            background: rgba(0, 0, 0, 0.4); /* طبقة شفافة فوق الخلفية المتدرجة */
+            backdrop-filter: blur(5px);
+            justify-content: space-around; /* توزيع المحتوى بشكل أفضل */
+            padding-bottom: 50px; /* مسافة للزر في الأسفل */
+        }
 
-.node{
-  width:70px;
-  height:70px;
-  border-radius:50%;
-  background:var(--glass);
-  backdrop-filter:blur(12px);
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  cursor:pointer;
-  font-size:20px;
-  box-shadow:0 0 15px rgba(0,255,225,.4);
-  transition:.3s;
-}
+        h1 {
+            font-size: 4rem;
+            color: #fdbb2d; /* لون ذهبي لاسم اللعبة */
+            text-shadow: 0 0 10px rgba(253, 187, 45, 0.8);
+            margin-bottom: 20px;
+        }
 
-.node.locked{
-  opacity:.25;
-  pointer-events:none;
-}
+        .hexagon-container {
+            perspective: 1000px; /* لإنشاء منظور ثلاثي الأبعاد */
+            margin-top: -50px; /* لرفع الشكل قليلاً */
+        }
 
-.node:hover{
-  box-shadow:0 0 30px var(--neon);
-}
+        .hexagon {
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(45deg, #0ea5e9, #6a00ff); /* تدرج أزرق بنفسجي */
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotate3D 10s infinite linear; /* دوران ثلاثي الأبعاد */
+            border-radius: 10px; /* للحواف */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3em;
+            font-weight: 900;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); /* شكل سداسي */
+        }
 
-/* ========== GAME ========== */
-#game{
-  display:none;
-  height:100vh;
-  padding-top:40px;
-}
+        @keyframes rotate3D {
+            0% { transform: rotateY(0deg) rotateX(0deg); }
+            100% { transform: rotateY(360deg) rotateX(360deg); }
+        }
 
-#grid{
-  display:grid;
-  grid-template-columns:repeat(3,90px);
-  gap:10px;
-  justify-content:center;
-}
+        .start-button {
+            background: #b21f1f; /* لون أحمر جذاب للزر */
+            border: none;
+            padding: 18px 60px;
+            border-radius: 50px;
+            font-weight: 900;
+            font-size: 1.5rem;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
 
-.hex{
-  width:90px;
-  height:104px;
-  clip-path:polygon(
-    50% 0%,93% 25%,93% 75%,
-    50% 100%,7% 75%,7% 25%
-  );
-  background:#111;
-  position:relative;
-  cursor:pointer;
-}
+        .start-button:hover {
+            transform: translateY(-3px) scale(1.05);
+            background-color: #fdbb2d; /* يتغير اللون عند التحويم */
+        }
 
-.pipe{
-  position:absolute;
-  inset:18px;
-  border:3px solid var(--neon);
-  border-radius:12px;
-  filter:drop-shadow(0 0 8px var(--neon));
-  transition:.3s;
-}
+        /* شاشة الألغاز */
+        #game-screen {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            padding: 20px;
+            box-sizing: border-box;
+            justify-content: flex-start; /* ليكون المحتوى في الأعلى */
+            padding-top: 50px;
+        }
 
-.source{
-  background:#003a3a;
-}
+        #level-indicator {
+            font-size: 2rem;
+            color: #0ea5e9;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
 
-.target{
-  background:#3a0000;
-}
+        #puzzle-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 60px); /* شبكة 5x5 للقطع */
+            grid-template-rows: repeat(5, 60px);
+            gap: 5px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            max-width: fit-content;
+            margin: 0 auto;
+        }
 
-.win .pipe{
-  filter:drop-shadow(0 0 20px var(--neon));
-}
-</style>
+        .puzzle-piece {
+            width: 60px;
+            height: 60px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s linear; /* حركة دوران سريعة */
+            transform-origin: center;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .puzzle-piece .line {
+            position: absolute;
+            background-color: white;
+            border-radius: 2px;
+        }
+        .puzzle-piece .line.h { width: 80%; height: 4px; } /* خط أفقي */
+        .puzzle-piece .line.v { height: 80%; width: 4px; } /* خط عمودي */
+        .puzzle-piece .line.d1 { width: 80%; height: 4px; transform: rotate(45deg); } /* خط مائل 1 */
+        .puzzle-piece .line.d2 { width: 80%; height: 4px; transform: rotate(-45deg); } /* خط مائل 2 */
+        .puzzle-piece .line.half-h-left { width: 40%; height: 4px; left: 0; }
+        .puzzle-piece .line.half-h-right { width: 40%; height: 4px; right: 0; }
+        .puzzle-piece .line.half-v-top { height: 40%; width: 4px; top: 0; }
+        .puzzle-piece .line.half-v-bottom { height: 40%; width: 4px; bottom: 0; }
+        .puzzle-piece .line.corner-top-left { width: 40%; height: 4px; top: 0; left: 0; transform-origin: top left; transform: rotate(90deg) translateY(-4px) translateX(calc(50% - 2px)); } /* مثال لزاوية */
+
+        /* لتجنب التعقيد، سنبسط تمثيل القطع في البداية */
+        .puzzle-piece.type-0 { /* لا شيء */ }
+        .puzzle-piece.type-1 .line-0 { width: 80%; height: 4px; } /* خط مستقيم أفقي */
+        .puzzle-piece.type-2 .line-0 { width: 80%; height: 4px; transform: rotate(90deg); } /* خط مستقيم عمودي */
+        .puzzle-piece.type-3 .line-0, .puzzle-piece.type-3 .line-1 { width: 40%; height: 4px; left: 0; top: 50%; transform: translateY(-50%); } /* زاوية حرف L */
+        .puzzle-piece.type-3 .line-1 { transform: rotate(90deg); transform-origin: left center; left: 50%; top: 50%; }
+
+        /* الأنماط لتمثيل القطع، يمكن تحسينها لاحقاً باستخدام SVG */
+        .piece-straight-h::after, .piece-straight-v::after, .piece-corner::after, .piece-t::after, .piece-cross::after {
+            content: '';
+            position: absolute;
+            background-color: white;
+            border-radius: 2px;
+        }
+
+        /* خط أفقي */
+        .piece-straight-h::after { width: 80%; height: 4px; }
+        /* خط عمودي */
+        .piece-straight-v::after { width: 4px; height: 80%; }
+        /* زاوية */
+        .piece-corner::before, .piece-corner::after { content: ''; position: absolute; background-color: white; border-radius: 2px; }
+        .piece-corner::before { width: 40%; height: 4px; top: 50%; left: 10%; transform: translateY(-50%); }
+        .piece-corner::after { width: 4px; height: 40%; left: 50%; top: 10%; transform: translateX(-50%); }
+        /* قطعة T */
+        .piece-t::before, .piece-t::after, .piece-t .center-line { content: ''; position: absolute; background-color: white; border-radius: 2px; }
+        .piece-t::before { width: 80%; height: 4px; top: 50%; transform: translateY(-50%); }
+        .piece-t::after { width: 4px; height: 40%; top: 10%; left: 50%; transform: translateX(-50%); }
+        /* قطعة تقاطع */
+        .piece-cross::before, .piece-cross::after { content: ''; position: absolute; background-color: white; border-radius: 2px; }
+        .piece-cross::before { width: 80%; height: 4px; }
+        .piece-cross::after { width: 4px; height: 80%; }
+
+
+    </style>
 </head>
-
 <body>
 
-<!-- MAP SCREEN -->
-<div id="map"></div>
+    <div id="start-screen" class="screen active">
+        <h1>IQ Arena</h1>
+        <div class="hexagon-container">
+            <div class="hexagon">🧠</div>
+        </div>
+        <button class="start-button" onclick="startGame()">ابدأ اللعب</button>
+    </div>
 
-<!-- GAME SCREEN -->
-<div id="game">
-  <div id="grid"></div>
-</div>
+    <div id="game-screen" class="screen">
+        <div id="level-indicator">المستوى 1</div>
+        <div id="puzzle-grid">
+            </div>
+        <button class="start-button" onclick="nextLevel()" style="margin-top: 30px; background: #0ea5e9;">المستوى التالي</button>
+    </div>
 
-<script>
-/* ===== LEVEL DATA ===== */
-const levels = [
- [
-  {type:"source", con:[3]},
-  {type:"normal", con:[0,3]},
-  {type:"normal", con:[0]},
-  {type:"normal", con:[3]},
-  {type:"normal", con:[0,3]},
-  {type:"target", con:[0]}
- ],
- [
-  {type:"source", con:[2]},
-  {type:"normal", con:[5,2]},
-  {type:"normal", con:[5]},
-  {type:"normal", con:[2]},
-  {type:"normal", con:[5,2]},
-  {type:"target", con:[5]}
- ]
-];
+    <script>
+        let currentLevel = 1;
+        const gridSize = 5; // شبكة 5x5
+        let puzzle = []; // لتخزين حالة القطع
 
-/* ===== STATE ===== */
-let unlocked = Number(localStorage.getItem("iq_unlocked")) || 0;
-const map = document.getElementById("map");
-const grid = document.getElementById("grid");
-let current = [];
+        // دالة التبديل بين الشاشات
+        function switchScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
 
-/* ===== BUILD MAP ===== */
-function buildMap(){
-  map.innerHTML="";
-  levels.forEach((_,i)=>{
-    const node=document.createElement("div");
-    node.className="node"+(i>unlocked?" locked":"");
-    node.textContent=i+1;
-    node.onclick=()=>startLevel(i);
-    map.appendChild(node);
-  });
-}
-buildMap();
+        // بدء اللعبة والانتقال لشاشة الألغاز
+        function startGame() {
+            switchScreen('game-screen');
+            loadLevel(currentLevel);
+        }
 
-/* ===== START LEVEL ===== */
-function startLevel(index){
-  map.style.display="none";
-  document.getElementById("game").style.display="block";
-  buildGrid(index);
-}
+        // تحميل مستوى جديد
+        function loadLevel(level) {
+            document.getElementById('level-indicator').innerText = `المستوى ${level}`;
+            generateRandomPuzzle(gridSize);
+            renderPuzzle();
+        }
 
-/* ===== BUILD GRID ===== */
-function buildGrid(level){
-  grid.innerHTML="";
-  current = levels[level].map(c=>({
-    ...c,
-    rot:Math.floor(Math.random()*6)
-  }));
+        // توليد ألغاز عشوائية (مبسطة جداً حالياً)
+        function generateRandomPuzzle(size) {
+            puzzle = [];
+            const pieceTypes = ['straight-h', 'straight-v', 'corner', 't', 'cross']; // أنواع مبسطة
+            
+            for (let i = 0; i < size * size; i++) {
+                const type = pieceTypes[Math.floor(Math.random() * pieceTypes.length)];
+                const rotation = Math.floor(Math.random() * 4) * 90; // 0, 90, 180, 270
+                puzzle.push({ type: type, rotation: rotation });
+            }
+        }
 
-  current.forEach((cell,i)=>{
-    const hex=document.createElement("div");
-    hex.className="hex "+cell.type;
+        // رسم الألغاز في الشبكة
+        function renderPuzzle() {
+            const gridElement = document.getElementById('puzzle-grid');
+            gridElement.innerHTML = ''; // مسح الألغاز القديمة
 
-    const pipe=document.createElement("div");
-    pipe.className="pipe";
-    pipe.style.transform=`rotate(${cell.rot*60}deg)`;
-    hex.appendChild(pipe);
+            puzzle.forEach((piece, index) => {
+                const pieceElement = document.createElement('div');
+                pieceElement.className = `puzzle-piece piece-${piece.type}`;
+                pieceElement.style.transform = `rotate(${piece.rotation}deg)`;
+                pieceElement.onclick = () => rotatePiece(index);
 
-    hex.onclick=()=>{
-      cell.rot=(cell.rot+1)%6;
-      pipe.style.transform=`rotate(${cell.rot*60}deg)`;
-      checkWin(level);
-    };
+                // هنا يمكنك إضافة تمثيل رسومي للقطعة (خطوط، زوايا، إلخ.)
+                // حالياً نستخدم CSS pseudo-elements لبعض الأنماط، ولكن SVG سيكون أفضل
+                // for (let i = 0; i < piece.lines; i++) {
+                //     const line = document.createElement('div');
+                //     line.className = `line line-${i}`;
+                //     pieceElement.appendChild(line);
+                // }
 
-    grid.appendChild(hex);
-  });
-}
+                gridElement.appendChild(pieceElement);
+            });
+        }
 
-/* ===== CHECK CONNECTION ===== */
-function checkWin(level){
-  if(tracePath()){
-    document.body.classList.add("win");
-    setTimeout(()=>{
-      document.body.classList.remove("win");
-      unlocked=Math.max(unlocked,level+1);
-      localStorage.setItem("iq_unlocked",unlocked);
-      location.reload();
-    },900);
-  }
-}
+        // تدوير القطعة عند النقر
+        function rotatePiece(index) {
+            puzzle[index].rotation = (puzzle[index].rotation + 90) % 360;
+            renderPuzzle(); // إعادة رسم اللغز
+            checkWin(); // التحقق من الفوز بعد كل تدوير
+        }
 
-/* ===== PATH TRACE ===== */
-function tracePath(){
-  const start=current.findIndex(c=>c.type==="source");
-  const visited=new Set();
-  return dfs(start);
+        // التحقق من الفوز (ستكون هذه الدالة أكثر تعقيداً لاحقاً)
+        function checkWin() {
+            // منطق الفوز الحقيقي سيكون معقداً ويعتمد على التحقق من اتصال جميع الخطوط
+            // في هذا الإصدار الأولي، لن تفعل شيئاً حتى نطور منطق القطع بشكل كامل.
+            console.log("التحقق من الفوز...");
+            // مثال بسيط جداً: إذا كانت جميع القطع في اتجاه معين (لغرض التجربة فقط)
+            // if (puzzle.every(p => p.rotation === 0)) {
+            //     alert("تهانينا! لقد أكملت اللغز!");
+            //     // setTimeout(() => nextLevel(), 1000);
+            // }
+        }
 
-  function dfs(i){
-    if(i<0||i>=current.length||visited.has(i))return false;
-    visited.add(i);
-    if(current[i].type==="target")return true;
+        // الانتقال للمستوى التالي (عند الضغط على زر)
+        function nextLevel() {
+            currentLevel++;
+            loadLevel(currentLevel);
+        }
 
-    for(let d of current[i].con){
-      const real=(d+current[i].rot)%6;
-      const next=i+dir(real);
-      if(dfs(next))return true;
-    }
-    return false;
-  }
-}
-
-/* ===== HEX DIRECTION ===== */
-function dir(d){
-  return [-3,-2,1,3,2,-1][d];
-}
-</script>
-
+        // تهيئة اللعبة عند التحميل
+        document.addEventListener('DOMContentLoaded', () => {
+            // لا تفعل شيئاً في البداية سوى عرض شاشة البداية
+        });
+    </script>
 </body>
 </html>
