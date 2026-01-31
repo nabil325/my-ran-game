@@ -2,178 +2,231 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IQ Arena – Hexa Flow</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-:root {
-  --neon: #00ffe1;
-  --bg: #05050a;
-  --glass: rgba(255,255,255,0.08);
+:root{
+  --neon:#00ffe1;
+  --bg:#05050a;
+  --glass:rgba(255,255,255,.08);
 }
 
-* {
-  box-sizing: border-box;
-  font-family: 'Segoe UI', sans-serif;
+*{
+  box-sizing:border-box;
+  font-family:Segoe UI, sans-serif;
 }
 
-body {
-  margin: 0;
-  background: radial-gradient(circle at top, #0a0a15, var(--bg));
-  color: white;
-  height: 100vh;
-  overflow: hidden;
+body{
+  margin:0;
+  background:radial-gradient(circle at top,#0a0a18,var(--bg));
+  color:white;
+  height:100vh;
+  overflow:hidden;
 }
 
-/* ====== START SCREEN ====== */
-#startScreen {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+/* ========== MAP ========== */
+#map{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  gap:30px;
 }
 
-#logo {
-  width: 140px;
-  height: 160px;
-  background: linear-gradient(135deg, var(--neon), #0066ff);
-  clip-path: polygon(
-    50% 0%, 93% 25%, 93% 75%,
-    50% 100%, 7% 75%, 7% 25%
+.node{
+  width:70px;
+  height:70px;
+  border-radius:50%;
+  background:var(--glass);
+  backdrop-filter:blur(12px);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  cursor:pointer;
+  font-size:20px;
+  box-shadow:0 0 15px rgba(0,255,225,.4);
+  transition:.3s;
+}
+
+.node.locked{
+  opacity:.25;
+  pointer-events:none;
+}
+
+.node:hover{
+  box-shadow:0 0 30px var(--neon);
+}
+
+/* ========== GAME ========== */
+#game{
+  display:none;
+  height:100vh;
+  padding-top:40px;
+}
+
+#grid{
+  display:grid;
+  grid-template-columns:repeat(3,90px);
+  gap:10px;
+  justify-content:center;
+}
+
+.hex{
+  width:90px;
+  height:104px;
+  clip-path:polygon(
+    50% 0%,93% 25%,93% 75%,
+    50% 100%,7% 75%,7% 25%
   );
-  animation: pulse 2s infinite, spin 12s linear infinite;
-  filter: drop-shadow(0 0 25px var(--neon));
+  background:#111;
+  position:relative;
+  cursor:pointer;
 }
 
-@keyframes pulse {
-  0%,100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-h1 {
-  margin: 25px 0 10px;
-  letter-spacing: 2px;
+.pipe{
+  position:absolute;
+  inset:18px;
+  border:3px solid var(--neon);
+  border-radius:12px;
+  filter:drop-shadow(0 0 8px var(--neon));
+  transition:.3s;
 }
 
-button {
-  margin-top: 20px;
-  padding: 14px 40px;
-  border: none;
-  border-radius: 16px;
-  background: var(--glass);
-  backdrop-filter: blur(12px);
-  color: white;
-  font-size: 18px;
-  cursor: pointer;
-  box-shadow: 0 0 20px rgba(0,255,225,0.4);
+.source{
+  background:#003a3a;
 }
 
-/* ====== GAME ====== */
-#game {
-  display: none;
-  height: 100vh;
-  padding-top: 40px;
+.target{
+  background:#3a0000;
 }
 
-#grid {
-  display: grid;
-  grid-template-columns: repeat(3, 90px);
-  gap: 10px;
-  justify-content: center;
-}
-
-.hex {
-  width: 90px;
-  height: 104px;
-  background: #111;
-  clip-path: polygon(
-    50% 0%, 93% 25%, 93% 75%,
-    50% 100%, 7% 75%, 7% 25%
-  );
-  position: relative;
-  cursor: pointer;
-  transition: transform 0.3s;
-}
-
-.hex.active {
-  box-shadow: 0 0 25px var(--neon);
-}
-
-.pipe {
-  position: absolute;
-  inset: 18px;
-  border: 2px solid var(--neon);
-  border-radius: 10px;
-}
-
-/* WIN EFFECT */
-.win .hex {
-  box-shadow: 0 0 35px var(--neon);
+.win .pipe{
+  filter:drop-shadow(0 0 20px var(--neon));
 }
 </style>
 </head>
 
 <body>
 
-<div id="startScreen">
-  <div id="logo"></div>
-  <h1>IQ Arena</h1>
-  <button onclick="startGame()">START</button>
-</div>
+<!-- MAP SCREEN -->
+<div id="map"></div>
 
+<!-- GAME SCREEN -->
 <div id="game">
   <div id="grid"></div>
 </div>
 
 <script>
-const grid = document.getElementById("grid");
-let rotation = [];
+/* ===== LEVEL DATA ===== */
+const levels = [
+ [
+  {type:"source", con:[3]},
+  {type:"normal", con:[0,3]},
+  {type:"normal", con:[0]},
+  {type:"normal", con:[3]},
+  {type:"normal", con:[0,3]},
+  {type:"target", con:[0]}
+ ],
+ [
+  {type:"source", con:[2]},
+  {type:"normal", con:[5,2]},
+  {type:"normal", con:[5]},
+  {type:"normal", con:[2]},
+  {type:"normal", con:[5,2]},
+  {type:"target", con:[5]}
+ ]
+];
 
-function startGame() {
-  document.getElementById("startScreen").style.display = "none";
-  document.getElementById("game").style.display = "block";
-  buildLevel();
+/* ===== STATE ===== */
+let unlocked = Number(localStorage.getItem("iq_unlocked")) || 0;
+const map = document.getElementById("map");
+const grid = document.getElementById("grid");
+let current = [];
+
+/* ===== BUILD MAP ===== */
+function buildMap(){
+  map.innerHTML="";
+  levels.forEach((_,i)=>{
+    const node=document.createElement("div");
+    node.className="node"+(i>unlocked?" locked":"");
+    node.textContent=i+1;
+    node.onclick=()=>startLevel(i);
+    map.appendChild(node);
+  });
+}
+buildMap();
+
+/* ===== START LEVEL ===== */
+function startLevel(index){
+  map.style.display="none";
+  document.getElementById("game").style.display="block";
+  buildGrid(index);
 }
 
-function buildLevel() {
-  grid.innerHTML = "";
-  rotation = [];
+/* ===== BUILD GRID ===== */
+function buildGrid(level){
+  grid.innerHTML="";
+  current = levels[level].map(c=>({
+    ...c,
+    rot:Math.floor(Math.random()*6)
+  }));
 
-  for (let i = 0; i < 6; i++) {
-    const hex = document.createElement("div");
-    hex.className = "hex";
-    rotation[i] = Math.floor(Math.random() * 6);
+  current.forEach((cell,i)=>{
+    const hex=document.createElement("div");
+    hex.className="hex "+cell.type;
 
-    const pipe = document.createElement("div");
-    pipe.className = "pipe";
-    pipe.style.transform = `rotate(${rotation[i]*60}deg)`;
-
+    const pipe=document.createElement("div");
+    pipe.className="pipe";
+    pipe.style.transform=`rotate(${cell.rot*60}deg)`;
     hex.appendChild(pipe);
 
-    hex.onclick = () => rotateHex(i, pipe, hex);
+    hex.onclick=()=>{
+      cell.rot=(cell.rot+1)%6;
+      pipe.style.transform=`rotate(${cell.rot*60}deg)`;
+      checkWin(level);
+    };
+
     grid.appendChild(hex);
+  });
+}
+
+/* ===== CHECK CONNECTION ===== */
+function checkWin(level){
+  if(tracePath()){
+    document.body.classList.add("win");
+    setTimeout(()=>{
+      document.body.classList.remove("win");
+      unlocked=Math.max(unlocked,level+1);
+      localStorage.setItem("iq_unlocked",unlocked);
+      location.reload();
+    },900);
   }
 }
 
-function rotateHex(i, pipe, hex) {
-  rotation[i] = (rotation[i] + 1) % 6;
-  pipe.style.transform = `rotate(${rotation[i]*60}deg)`;
-  hex.classList.add("active");
-  setTimeout(()=>hex.classList.remove("active"),200);
-  checkWin();
+/* ===== PATH TRACE ===== */
+function tracePath(){
+  const start=current.findIndex(c=>c.type==="source");
+  const visited=new Set();
+  return dfs(start);
+
+  function dfs(i){
+    if(i<0||i>=current.length||visited.has(i))return false;
+    visited.add(i);
+    if(current[i].type==="target")return true;
+
+    for(let d of current[i].con){
+      const real=(d+current[i].rot)%6;
+      const next=i+dir(real);
+      if(dfs(next))return true;
+    }
+    return false;
+  }
 }
 
-function checkWin() {
-  const solved = rotation.every(r => r === 0);
-  if (solved) {
-    document.getElementById("game").classList.add("win");
-    localStorage.setItem("IQArenaLevel", 1);
-  }
+/* ===== HEX DIRECTION ===== */
+function dir(d){
+  return [-3,-2,1,3,2,-1][d];
 }
 </script>
 
